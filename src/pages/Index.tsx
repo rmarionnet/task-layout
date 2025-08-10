@@ -32,7 +32,7 @@ function addDays(d: Date, n: number) { const x = new Date(d); x.setDate(x.getDat
 export default function Index() {
   const { toast } = useToast();
   const [tasks, setTasks] = useState<Task[]>([]);
-  const [weekStart] = useState<Date>(() => getMonday(new Date()));
+  const [weekStart, setWeekStart] = useState<Date>(() => getMonday(new Date()));
 
   // Filters
   const [filterCategory, setFilterCategory] = useState<'ALL' | Category>('ALL');
@@ -77,7 +77,22 @@ export default function Index() {
     return out;
   }, [tasks]);
 
+  const quotesByClient = useMemo(() => {
+    const map: Record<string, Set<string>> = {};
+    tasks.forEach(t => {
+      if (t.category === 'FACTURABLE' && t.client && t.quote) {
+        if (!map[t.client]) map[t.client] = new Set();
+        map[t.client].add(t.quote);
+      }
+    });
+    const out: Record<string, string[]> = {};
+    Object.entries(map).forEach(([k, v]) => out[k] = Array.from(v).sort());
+    return out;
+  }, [tasks]);
+
   const weekDatesISO = useMemo(() => Array.from({ length: 6 }, (_, i) => isoDate(addDays(weekStart, i))), [weekStart]);
+  const weekEnd = useMemo(() => addDays(weekStart, 5), [weekStart]);
+  const weekLabel = useMemo(() => `${isoDate(weekStart)} → ${isoDate(weekEnd)}`, [weekStart, weekEnd]);
 
   const filteredTasks = useMemo(() => {
     return tasks.filter(t => {
@@ -183,6 +198,12 @@ export default function Index() {
           <h1 className="text-2xl font-semibold">Time Tracking — Agenda hebdomadaire</h1>
           <p className="text-muted-foreground mt-1">Lundi → Samedi, 07:00 → 20:00</p>
 
+          <div className="mt-4 flex items-center gap-3 flex-wrap">
+            <Button variant="secondary" onClick={() => setWeekStart(prev => addDays(prev, -7))}>Semaine précédente</Button>
+            <div className="px-3 py-1 border rounded-md text-sm">{weekLabel}</div>
+            <Button onClick={() => setWeekStart(prev => addDays(prev, 7))}>Semaine suivante</Button>
+          </div>
+
           {/* Filters */}
           <div className="mt-6 grid grid-cols-1 md:grid-cols-4 gap-4">
             <div className="space-y-1">
@@ -223,6 +244,7 @@ export default function Index() {
           filteredTasks={filteredTasks}
           clients={clients}
           projectsByClient={projectsByClient}
+          quotesByClient={quotesByClient}
           types={types}
           onUpsert={upsertTask}
           onDelete={deleteTask}

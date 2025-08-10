@@ -39,6 +39,7 @@ export interface TaskModalProps {
   existingTask?: Task;
   clients: string[];
   projectsByClient: Record<string, string[]>;
+  quotesByClient: Record<string, string[]>;
   types: string[];
   onClose: () => void;
   onSave: (task: Task) => { ok: true } | { ok: false; error: string };
@@ -54,6 +55,7 @@ export default function TaskModal(props: TaskModalProps) {
     existingTask,
     clients,
     projectsByClient,
+    quotesByClient,
     types,
     onClose,
     onSave,
@@ -63,6 +65,7 @@ export default function TaskModal(props: TaskModalProps) {
   const [category, setCategory] = useState<Category>(existingTask?.category ?? 'FACTURABLE');
   const [client, setClient] = useState<string>(existingTask?.client ?? '');
   const [project, setProject] = useState<string>(existingTask?.project ?? '');
+  const [quote, setQuote] = useState<string>(existingTask?.quote ?? '');
   const [type, setType] = useState<string>(existingTask?.type ?? '');
   const [description, setDescription] = useState<string>(existingTask?.description ?? '');
   const [billed, setBilled] = useState<boolean>(existingTask?.billed ?? false);
@@ -75,6 +78,7 @@ export default function TaskModal(props: TaskModalProps) {
     setCategory(existingTask?.category ?? 'FACTURABLE');
     setClient(existingTask?.client ?? '');
     setProject(existingTask?.project ?? '');
+    setQuote(existingTask?.quote ?? '');
     setType(existingTask?.type ?? '');
     setDescription(existingTask?.description ?? '');
     setBilled(existingTask?.billed ?? false);
@@ -86,6 +90,10 @@ export default function TaskModal(props: TaskModalProps) {
     return client ? (projectsByClient[client] ?? []) : [];
   }, [client, projectsByClient]);
 
+  const availableQuotes = useMemo(() => {
+    return client ? (quotesByClient[client] ?? []) : [];
+  }, [client, quotesByClient]);
+
   const durationOptions = useMemo(() => getDurationOptions(startHour), [startHour]);
   const endHour = startHour + duration;
 
@@ -94,6 +102,7 @@ export default function TaskModal(props: TaskModalProps) {
     if (value === 'NON_FACTURABLE') {
       setClient('');
       setProject('');
+      setQuote('');
       setBilled(false);
     } else {
       setType('');
@@ -123,6 +132,7 @@ export default function TaskModal(props: TaskModalProps) {
       category,
       client: category === 'FACTURABLE' ? (client.trim() || undefined) : undefined,
       project: category === 'FACTURABLE' ? (project.trim() || undefined) : undefined,
+      quote: category === 'FACTURABLE' ? (quote.trim() || undefined) : undefined,
       type: category === 'NON_FACTURABLE' ? (type.trim() || undefined) : undefined,
       description: description.trim() ? description.trim() : undefined,
       billed: category === 'FACTURABLE' ? billed : undefined,
@@ -175,6 +185,15 @@ export default function TaskModal(props: TaskModalProps) {
                 <datalist id="projects-dl">
                   {availableProjects.map((p) => (
                     <option key={p} value={p} />
+                  ))}
+                </datalist>
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="quote">Devis (optionnel)</Label>
+                <Input id="quote" value={quote} list="quotes-dl" onChange={(e) => setQuote(e.target.value)} placeholder="Ex: DV-2025-001" />
+                <datalist id="quotes-dl">
+                  {availableQuotes.map((q) => (
+                    <option key={q} value={q} />
                   ))}
                 </datalist>
               </div>

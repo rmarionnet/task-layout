@@ -30,13 +30,14 @@ export interface WeeklyGridProps {
   filteredTasks: Task[];
   clients: string[];
   projectsByClient: Record<string, string[]>;
+  quotesByClient: Record<string, string[]>;
   types: string[];
   onUpsert: (task: Task) => { ok: true } | { ok: false; error: string };
   onDelete: (id: string) => void;
 }
 
 export default function WeeklyGrid(props: WeeklyGridProps) {
-  const { weekStart, tasks, filteredTasks, clients, projectsByClient, types, onUpsert, onDelete } = props;
+  const { weekStart, tasks, filteredTasks, clients, projectsByClient, quotesByClient, types, onUpsert, onDelete } = props;
   const weekDays = useMemo(() => Array.from({ length: 6 }, (_, i) => addDays(weekStart, i)), [weekStart]);
   const hours = useMemo(() => Array.from({ length: END_HOUR - START_HOUR }, (_, i) => START_HOUR + i), []);
 
@@ -67,9 +68,9 @@ export default function WeeklyGrid(props: WeeklyGridProps) {
       <div className="min-w-[900px]">
         {/* Header row */}
         <div className="grid" style={{ gridTemplateColumns: '120px repeat(6, 1fr)' }}>
-          <div className="h-10 flex items-center justify-center text-sm font-medium border-b">Heures</div>
+          <div className="h-10 box-border flex items-center justify-center text-sm font-medium border-b">Heures</div>
           {weekDays.map((d) => (
-            <div key={isoDate(d)} className="h-10 flex items-center justify-center text-sm font-medium border-b">
+            <div key={isoDate(d)} className="h-10 box-border flex items-center justify-center text-sm font-medium border-b">
               {dayLabel(d)}
             </div>
           ))}
@@ -80,7 +81,7 @@ export default function WeeklyGrid(props: WeeklyGridProps) {
           {/* Hours column */}
           <div>
             {hours.map((h, idx) => (
-              <div key={h} className={`h-12 border-b text-sm flex items-center justify-center ${idx === hours.length - 1 ? '' : ''}`}>
+              <div key={h} className={`h-12 box-border border-b text-sm flex items-center justify-center ${idx === hours.length - 1 ? '' : ''}`}>
                 {pad(h)}:00
               </div>
             ))}
@@ -91,13 +92,13 @@ export default function WeeklyGrid(props: WeeklyGridProps) {
             const dateISO = isoDate(d);
             const dayTasks = filteredTasks.filter((t) => t.dateISO === dateISO);
             return (
-              <div key={dateISO} className="relative border-l">
+              <div key={dateISO} className="relative box-border border-l">
                 {/* Clickable hour cells */}
                 {hours.map((h, i) => (
                   <button
                     key={h}
                     type="button"
-                    className="h-12 w-full border-b hover:bg-accent/40 transition-colors"
+                    className="h-12 w-full box-border border-0 border-b hover:bg-accent/40 transition-colors"
                     aria-label={`Créer tâche à ${pad(h)}:00`}
                     onClick={() => openCreate(dateISO, h)}
                   />
@@ -126,7 +127,7 @@ export default function WeeklyGrid(props: WeeklyGridProps) {
                         </div>
                         <div className="text-muted-foreground">
                           {isBillable ? (
-                            <span>{t.client}{t.project ? ` — ${t.project}` : ''}</span>
+                            <span>{t.client}{t.project ? ` — ${t.project}` : ''}{t.quote ? ` — Devis ${t.quote}` : ''}</span>
                           ) : (
                             <span>{t.type}</span>
                           )}
@@ -145,19 +146,20 @@ export default function WeeklyGrid(props: WeeklyGridProps) {
         </div>
       </div>
 
-      <TaskModal
-        open={modalOpen}
-        mode={modalMode}
-        dateISO={modalDateISO}
-        startHour={modalStartHour}
-        existingTask={editingTask}
-        clients={clients}
-        projectsByClient={projectsByClient}
-        types={types}
-        onClose={() => setModalOpen(false)}
-        onSave={onUpsert}
-        onDelete={onDelete}
-      />
+        <TaskModal
+          open={modalOpen}
+          mode={modalMode}
+          dateISO={modalDateISO}
+          startHour={modalStartHour}
+          existingTask={editingTask}
+          clients={clients}
+          projectsByClient={projectsByClient}
+          quotesByClient={quotesByClient}
+          types={types}
+          onClose={() => setModalOpen(false)}
+          onSave={onUpsert}
+          onDelete={onDelete}
+        />
     </div>
   );
 }

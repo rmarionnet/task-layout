@@ -8,6 +8,7 @@ export interface Task {
   category: Category;
   client?: string;   // if FACTURABLE
   project?: string;  // if FACTURABLE
+  quote?: string;    // optional, if FACTURABLE (Devis)
   type?: string;     // if NON_FACTURABLE
   description?: string;
   billed?: boolean;  // if FACTURABLE
