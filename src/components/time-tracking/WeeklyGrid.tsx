@@ -240,10 +240,20 @@ export default function WeeklyGrid(props: WeeklyGridProps) {
                     window.addEventListener('mouseup', handleUp);
                   };
 
+                  const durationH = t.endHour - t.startHour;
+                  const timeLabel = `${pad(t.startHour)}:00 → ${pad(t.endHour)}:00`;
+                  const showFade = durationH === 1 || (durationH === 2 && !!t.description);
+                  const contentClasses = durationH === 1
+                    ? 'p-1 text-[11px] leading-[1.05] space-y-0.5'
+                    : durationH === 2
+                      ? 'p-1 text-xs leading-tight space-y-0.5'
+                      : `p-2 ${durationH >= 5 ? 'text-sm' : 'text-xs'} leading-5 space-y-0.5`;
+                  const line2Clamp = durationH <= 2;
+
                   return (
                     <div
                       key={t.id}
-                      className={`absolute left-1 right-1 rounded-md border shadow-sm cursor-move ${isBillable ? 'bg-emerald-100 border-emerald-300' : 'bg-gray-100 border-gray-300'} hover:shadow-md select-none`}
+                      className={`absolute left-1 right-1 rounded-md border shadow-sm cursor-move ${isBillable ? 'bg-emerald-100 border-emerald-300' : 'bg-gray-100 border-gray-300'} hover:shadow-md select-none overflow-hidden relative group ${showFade ? "after:content-[''] after:absolute after:inset-x-0 after:bottom-0 after:h-4 after:pointer-events-none after:bg-gradient-to-b after:from-transparent after:to-[inherit]" : ''}`}
                       style={{ top: (t.startHour - START_HOUR) * HOUR_H, height }}
                       onMouseDown={onMouseDown}
                     >
@@ -251,7 +261,9 @@ export default function WeeklyGrid(props: WeeklyGridProps) {
                       <div className="absolute left-0 right-0 h-2 -top-1 cursor-ns-resize" onMouseDown={onResize('top')} />
                       <div className="absolute left-0 right-0 h-2 -bottom-1 cursor-ns-resize" onMouseDown={onResize('bottom')} />
 
-                      <div className="p-2 text-xs leading-5 space-y-1">
+                      {/* Content area with duration-aware layout */}
+                      <div className={contentClasses}>
+                        {/* L1: Category + badge (unchanged) */}
                         <div className="flex items-center justify-between">
                           <div className="font-medium">{isBillable ? 'Facturable' : 'Non facturable'}</div>
                           {isBillable && (
@@ -260,17 +272,70 @@ export default function WeeklyGrid(props: WeeklyGridProps) {
                             </Badge>
                           )}
                         </div>
-                        <div className="text-muted-foreground">
+
+                        {/* L2: Client — Projet / Type (more visible) */}
+                        <div className={`${line2Clamp ? 'truncate' : ''} text-foreground font-medium`}>
                           {isBillable ? (
-                            <span>{t.client}{t.project ? ` — ${t.project}` : ''}{t.quote ? ` — Devis ${t.quote}` : ''}</span>
+                            <>
+                              <span>{t.client}</span>
+                              {t.project && (
+                                <span>{"\u00A0—\u00A0"}{t.project}</span>
+                              )}
+                            </>
                           ) : (
                             <span>{t.type}</span>
                           )}
                         </div>
-                        {t.description && (
-                          <div className="truncate">{t.description}</div>
+
+                        {/* L3: Time + Quote (for duration >= 2) */}
+                        {durationH >= 2 && (
+                          <div className="text-muted-foreground">
+                            {timeLabel}
+                            {t.quote && <span>{"\u00A0—\u00A0"}{t.quote}</span>}
+                          </div>
                         )}
-                        <div className="text-[11px] text-muted-foreground">{pad(t.startHour)}:00 → {pad(t.endHour)}:00</div>
+
+                        {/* L4(+): Description (first line for 2h, full for >=3h) */}
+                        {t.description && (
+                          durationH === 2 ? (
+                            <div className="text-muted-foreground truncate">{t.description}</div>
+                          ) : (
+                            durationH >= 3 && (
+                              <div className="text-muted-foreground whitespace-normal break-words">{t.description}</div>
+                            )
+                          )
+                        )}
+                      </div>
+
+                      {/* Hover popover with full content (does not block DnD on block) */}
+                      <div className="pointer-events-none absolute left-0 right-0 -top-1 -translate-y-full z-50 opacity-0 group-hover:opacity-100 transition-opacity">
+                        <div className="pointer-events-auto shadow-lg rounded-md border bg-popover p-2 text-xs max-h-64 overflow-auto">
+                          <div className="flex items-center justify-between">
+                            <div className="font-medium">{isBillable ? 'Facturable' : 'Non facturable'}</div>
+                            {isBillable && (
+                              <Badge variant="secondary" className={`${t.billed ? 'bg-emerald-200' : 'bg-yellow-200'} text-foreground`}>
+                                {t.billed ? 'Facturée' : 'À facturer'}
+                              </Badge>
+                            )}
+                          </div>
+                          <div className="mt-1">
+                            {isBillable ? (
+                              <div className="text-foreground font-medium">
+                                <span>{t.client}</span>
+                                {t.project && <span>{"\u00A0—\u00A0"}{t.project}</span>}
+                              </div>
+                            ) : (
+                              <div className="text-foreground font-medium">{t.type}</div>
+                            )}
+                          </div>
+                          <div className="text-muted-foreground mt-1">
+                            {timeLabel}
+                            {t.quote && <span>{"\u00A0—\u00A0"}{t.quote}</span>}
+                          </div>
+                          {t.description && (
+                            <div className="mt-1 whitespace-normal break-words text-muted-foreground">{t.description}</div>
+                          )}
+                        </div>
                       </div>
                     </div>
                   );
