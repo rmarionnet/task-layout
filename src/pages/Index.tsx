@@ -152,7 +152,7 @@ export default function Index() {
   }
 
   function toCSV(list: Task[]) {
-    const header = 'date;heure_debut;heure_fin;categorie;client;projet;type;description;duree_h;facturee';
+    const header = 'date;heure_debut;heure_fin;categorie;client;projet;devis;type;description;duree_h;facturee';
     const rows = list
       .slice()
       .sort((a,b) => a.dateISO.localeCompare(b.dateISO) || a.startHour - b.startHour)
@@ -163,6 +163,7 @@ export default function Index() {
         t.category,
         t.client ?? '',
         t.project ?? '',
+        t.quote ?? '',
         t.type ?? '',
         t.description ?? '',
         (t.endHour - t.startHour),

@@ -72,6 +72,9 @@ export default function TaskModal(props: TaskModalProps) {
   const [duration, setDuration] = useState<number>(existingTask ? (existingTask.endHour - existingTask.startHour) : 1);
   const [error, setError] = useState<string | null>(null);
 
+  const [localDateISO, setLocalDateISO] = useState<string>(dateISO);
+  const [localStartHour, setLocalStartHour] = useState<number>(startHour);
+
   useEffect(() => {
     if (!open) return;
     // Reset when opening
@@ -83,8 +86,10 @@ export default function TaskModal(props: TaskModalProps) {
     setDescription(existingTask?.description ?? '');
     setBilled(existingTask?.billed ?? false);
     setDuration(existingTask ? (existingTask.endHour - existingTask.startHour) : 1);
+    setLocalDateISO(dateISO);
+    setLocalStartHour(startHour);
     setError(null);
-  }, [open, existingTask]);
+  }, [open, existingTask, dateISO, startHour]);
 
   const availableProjects = useMemo(() => {
     return client ? (projectsByClient[client] ?? []) : [];
@@ -94,8 +99,8 @@ export default function TaskModal(props: TaskModalProps) {
     return client ? (quotesByClient[client] ?? []) : [];
   }, [client, quotesByClient]);
 
-  const durationOptions = useMemo(() => getDurationOptions(startHour), [startHour]);
-  const endHour = startHour + duration;
+  const durationOptions = useMemo(() => getDurationOptions(localStartHour), [localStartHour]);
+  const endHour = localStartHour + duration;
 
   const handleCategoryChange = (value: Category) => {
     setCategory(value);
@@ -126,8 +131,8 @@ export default function TaskModal(props: TaskModalProps) {
 
     const task: Task = {
       id: existingTask?.id ?? (typeof crypto !== 'undefined' && 'randomUUID' in crypto ? crypto.randomUUID() : `${Date.now()}_${Math.random().toString(36).slice(2)}`),
-      dateISO,
-      startHour,
+      dateISO: localDateISO,
+      startHour: localStartHour,
       endHour,
       category,
       client: category === 'FACTURABLE' ? (client.trim() || undefined) : undefined,
@@ -222,11 +227,19 @@ export default function TaskModal(props: TaskModalProps) {
           <div className="grid grid-cols-3 gap-4">
             <div className="space-y-2">
               <Label>Date</Label>
-              <Input value={dateISO} readOnly />
+              <Input type="date" value={localDateISO} onChange={(e) => setLocalDateISO(e.target.value)} />
             </div>
             <div className="space-y-2">
               <Label>Début</Label>
-              <Input value={`${pad(startHour)}:00`} readOnly />
+              <select
+                className="w-full h-10 border rounded-md px-3"
+                value={localStartHour}
+                onChange={(e) => setLocalStartHour(parseInt(e.target.value, 10))}
+              >
+                {hoursArray().filter(h => h + duration <= END_HOUR).map((h) => (
+                  <option key={h} value={h}>{pad(h)}:00</option>
+                ))}
+              </select>
             </div>
             <div className="space-y-2">
               <Label>Durée (h)</Label>
