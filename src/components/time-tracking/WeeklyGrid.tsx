@@ -253,7 +253,7 @@ export default function WeeklyGrid(props: WeeklyGridProps) {
                   return (
                     <div
                       key={t.id}
-                      className={`absolute left-1 right-1 rounded-md border shadow-sm cursor-move ${isBillable ? 'bg-emerald-100 border-emerald-300' : 'bg-gray-100 border-gray-300'} hover:shadow-md select-none overflow-hidden relative group ${showFade ? "after:content-[''] after:absolute after:inset-x-0 after:bottom-0 after:h-4 after:pointer-events-none after:bg-gradient-to-b after:from-transparent after:to-[inherit]" : ''}`}
+                      className={`absolute left-1 right-1 rounded-md border shadow-sm cursor-move ${isBillable ? 'bg-emerald-100 border-emerald-300' : 'bg-gray-100 border-gray-300'} hover:shadow-md select-none overflow-hidden group ${showFade ? "after:content-[''] after:absolute after:inset-x-0 after:bottom-0 after:h-4 after:pointer-events-none after:bg-gradient-to-b after:from-transparent after:to-[inherit]" : ''}`}
                       style={{ top: (t.startHour - START_HOUR) * HOUR_H, height }}
                       onMouseDown={onMouseDown}
                     >
