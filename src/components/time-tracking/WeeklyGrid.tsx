@@ -3,6 +3,7 @@ import { Task, Category } from '@/types';
 import TaskModal from './TaskModal';
 import { Badge } from '@/components/ui/badge';
 import { normalizeClient, deriveColors, getDefaultColorForClient } from '@/utils/color';
+import { toast } from '@/components/ui/use-toast';
 const START_HOUR = 7;
 const END_HOUR = 20; // exclusive
 const HEADER_H = 40; // px
@@ -104,6 +105,50 @@ export default function WeeklyGrid(props: WeeklyGridProps) {
     finally { e.target.value = ''; }
   };
 
+  // Clipboard & hover state for copy/paste
+  const [hoverTarget, setHoverTarget] = useState<{ dateISO: string; hour: number } | null>(null);
+  const [hoveredTaskId, setHoveredTaskId] = useState<string | null>(null);
+  const [copiedTask, setCopiedTask] = useState<Task | null>(null);
+
+  useEffect(() => {
+    const handleKey = (e: KeyboardEvent) => {
+      const key = e.key?.toLowerCase();
+      const isMeta = e.metaKey || e.ctrlKey;
+      if (!isMeta) return;
+
+      if (key === 'c') {
+        if (hoveredTaskId) {
+          const t = tasks.find((x) => x.id === hoveredTaskId);
+          if (t) {
+            setCopiedTask(t);
+            toast({ title: 'Tâche copiée', description: 'Placez la souris sur un créneau et pressez Ctrl/⌘+V pour coller.' });
+          }
+        }
+      } else if (key === 'v') {
+        if (copiedTask && hoverTarget) {
+          const duration = copiedTask.endHour - copiedTask.startHour;
+          let start = Math.max(START_HOUR, Math.min(END_HOUR - duration, hoverTarget.hour));
+          const newTask: Task = {
+            ...copiedTask,
+            id: Math.random().toString(36).slice(2),
+            dateISO: hoverTarget.dateISO,
+            startHour: start,
+            endHour: start + duration,
+          };
+          const res = onUpsert(newTask);
+          if ('ok' in res && res.ok) {
+            toast({ title: 'Tâche collée', description: `${pad(newTask.startHour)}:00 → ${pad(newTask.endHour)}:00` });
+          } else {
+            const err = (res as any)?.error || 'Conflit ou plage invalide.';
+            toast({ title: 'Collage impossible', description: err });
+          }
+        }
+      }
+    };
+    window.addEventListener('keydown', handleKey);
+    return () => window.removeEventListener('keydown', handleKey);
+  }, [hoveredTaskId, hoverTarget, copiedTask, tasks, onUpsert]);
+
   const openCreate = (dateISO: string, startHour: number) => {
     setModalMode('create');
     setEditingTask(undefined);
@@ -150,7 +195,16 @@ export default function WeeklyGrid(props: WeeklyGridProps) {
             const dateISO = isoDate(d);
             const dayTasks = filteredTasks.filter((t) => t.dateISO === dateISO);
             return (
-              <div key={dateISO} className="relative box-border border-l grid" style={{ gridTemplateRows: `repeat(${hours.length}, ${HOUR_H}px)` }}>
+              <div key={dateISO} className="relative box-border border-l grid" style={{ gridTemplateRows: `repeat(${hours.length}, ${HOUR_H}px)` }}
+                onMouseMove={(e) => {
+                  const rect = (e.currentTarget as HTMLElement).getBoundingClientRect();
+                  const y = e.clientY - rect.top;
+                  let hour = START_HOUR + Math.floor(y / HOUR_H);
+                  hour = Math.max(START_HOUR, Math.min(END_HOUR - 1, hour));
+                  setHoverTarget({ dateISO, hour });
+                }}
+                onMouseLeave={() => setHoverTarget(null)}
+              >
                 {/* Clickable hour cells */}
                 {hours.map((h) => (
                   <button
@@ -323,6 +377,16 @@ export default function WeeklyGrid(props: WeeklyGridProps) {
                       className={`absolute left-1 right-1 rounded-md border shadow-sm cursor-move hover:shadow-md select-none overflow-hidden group ${isBillable ? '' : 'bg-gray-100 border-gray-300'} ${showFade ? "after:content-[''] after:absolute after:inset-x-0 after:bottom-0 after:h-4 after:pointer-events-none after:bg-gradient-to-b after:from-transparent after:to-[inherit]" : ''}`}
                       style={{ top: (t.startHour - START_HOUR) * HOUR_H, height, ...(isBillable ? styleColor : {}) }}
                       onMouseDown={onMouseDown}
+                      onMouseEnter={() => setHoveredTaskId(t.id)}
+                      onMouseLeave={() => setHoveredTaskId((cur) => (cur === t.id ? null : cur))}
+                      onMouseMove={(e) => {
+                        const parent = (e.currentTarget as HTMLElement).parentElement as HTMLElement;
+                        const rect = parent.getBoundingClientRect();
+                        const y = e.clientY - rect.top;
+                        let hour = START_HOUR + Math.floor(y / HOUR_H);
+                        hour = Math.max(START_HOUR, Math.min(END_HOUR - 1, hour));
+                        setHoverTarget({ dateISO, hour });
+                      }}
                     >
                       {/* Resize handles */}
                       <div className="absolute left-0 right-0 h-2 -top-1 cursor-ns-resize" onMouseDown={onResize('top')} />
