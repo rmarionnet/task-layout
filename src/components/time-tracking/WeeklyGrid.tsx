@@ -1,8 +1,8 @@
-import { useMemo, useState } from 'react';
+import { useMemo, useState, useEffect } from 'react';
 import { Task, Category } from '@/types';
 import TaskModal from './TaskModal';
 import { Badge } from '@/components/ui/badge';
-
+import { normalizeClient, deriveColors, getDefaultColorForClient } from '@/utils/color';
 const START_HOUR = 7;
 const END_HOUR = 20; // exclusive
 const HEADER_H = 40; // px
@@ -47,6 +47,63 @@ export default function WeeklyGrid(props: WeeklyGridProps) {
   const [modalStartHour, setModalStartHour] = useState(START_HOUR);
   const [editingTask, setEditingTask] = useState<Task | undefined>(undefined);
 
+  type ClientColorMap = Record<string, { hex: string }>;
+  const LS_COLORS = 'tt.clientColors';
+  const [clientColors, setClientColors] = useState<ClientColorMap>(() => {
+    try { return JSON.parse(localStorage.getItem(LS_COLORS) || '{}'); } catch { return {}; }
+  });
+  useEffect(() => { localStorage.setItem(LS_COLORS, JSON.stringify(clientColors)); }, [clientColors]);
+  useEffect(() => {
+    setClientColors((prev) => {
+      let changed = false;
+      const next = { ...prev } as ClientColorMap;
+      clients.forEach((c) => {
+        if (!c) return;
+        const key = normalizeClient(c);
+        if (!next[key]) { next[key] = { hex: getDefaultColorForClient(c) }; changed = true; }
+      });
+      return changed ? next : prev;
+    });
+  }, [clients]);
+  const getClientHex = (client?: string) => {
+    if (!client) return undefined;
+    const key = normalizeClient(client);
+    return clientColors[key]?.hex || getDefaultColorForClient(client);
+  };
+  const setClientHex = (client: string, hex: string) => {
+    if (!client) return;
+    const key = normalizeClient(client);
+    setClientColors((prev) => ({ ...prev, [key]: { hex } }));
+  };
+  const resetClientHex = (client: string) => setClientHex(client, getDefaultColorForClient(client));
+  const exportColors = () => {
+    const data = JSON.stringify(clientColors, null, 2);
+    const blob = new Blob([data], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url; a.download = 'client-colors.json'; a.click();
+    URL.revokeObjectURL(url);
+  };
+  const onImportColors = async (e: any) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    try {
+      const text = await file.text();
+      const parsed = JSON.parse(text);
+      if (parsed && typeof parsed === 'object') {
+        const sanitized: ClientColorMap = {};
+        Object.keys(parsed).forEach((k) => {
+          const v = (parsed as any)[k];
+          const hex = typeof v?.hex === 'string' ? v.hex : undefined;
+          const ok = !!hex && /^#([0-9a-f]{6})$/i.test(hex);
+          if (ok) sanitized[normalizeClient(k)] = { hex: hex! };
+        });
+        setClientColors(sanitized);
+      }
+    } catch {}
+    finally { e.target.value = ''; }
+  };
+
   const openCreate = (dateISO: string, startHour: number) => {
     setModalMode('create');
     setEditingTask(undefined);
@@ -66,6 +123,40 @@ export default function WeeklyGrid(props: WeeklyGridProps) {
   return (
     <div className="w-full overflow-x-auto">
       <div className="min-w-[900px]">
+        {/* Client colors panel */}
+        <section aria-label="Couleurs clients" className="mb-3">
+          <div className="flex items-center justify-between">
+            <h2 className="text-sm font-medium">Couleurs clients</h2>
+            <div className="flex items-center gap-3">
+              <button type="button" onClick={exportColors} className="text-xs underline">Exporter</button>
+              <label className="text-xs underline cursor-pointer">
+                Importer
+                <input type="file" accept="application/json" onChange={onImportColors} className="hidden" />
+              </label>
+            </div>
+          </div>
+          <div className="mt-2 grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
+            {clients.slice().sort().map((c) => {
+              const hex = getClientHex(c) || '#ffffff';
+              const { bg, border } = deriveColors(hex);
+              return (
+                <div key={c} className="flex items-center gap-2">
+                  <span className="inline-block w-4 h-4 rounded-sm border" style={{ backgroundColor: bg, borderColor: border }} />
+                  <span className="flex-1 truncate text-sm">{c}</span>
+                  <input
+                    type="color"
+                    aria-label={`Couleur pour ${c}`}
+                    value={hex}
+                    onChange={(e) => setClientHex(c, e.target.value)}
+                    className="h-6 w-10 p-0 border rounded"
+                  />
+                  <button type="button" onClick={() => resetClientHex(c)} className="text-xs text-muted-foreground hover:underline">Réinitialiser</button>
+                </div>
+              );
+            })}
+          </div>
+        </section>
+
         {/* Header row */}
         <div className="grid" style={{ gridTemplateColumns: '120px repeat(6, 1fr)' }}>
           <div className="h-10 box-border flex items-center justify-center text-sm font-medium border-b">Heures</div>
@@ -250,11 +341,20 @@ export default function WeeklyGrid(props: WeeklyGridProps) {
                       : `p-2 ${durationH >= 5 ? 'text-sm' : 'text-xs'} leading-5 space-y-0.5`;
                   const line2Clamp = durationH <= 2;
 
+                  let styleColor: any = {};
+                  if (isBillable && t.client) {
+                    const hex = getClientHex(t.client);
+                    if (hex) {
+                      const { bg, border, text } = deriveColors(hex);
+                      styleColor = { backgroundColor: bg, borderColor: border, color: text };
+                    }
+                  }
+
                   return (
                     <div
                       key={t.id}
-                      className={`absolute left-1 right-1 rounded-md border shadow-sm cursor-move ${isBillable ? 'bg-emerald-100 border-emerald-300' : 'bg-gray-100 border-gray-300'} hover:shadow-md select-none overflow-hidden group ${showFade ? "after:content-[''] after:absolute after:inset-x-0 after:bottom-0 after:h-4 after:pointer-events-none after:bg-gradient-to-b after:from-transparent after:to-[inherit]" : ''}`}
-                      style={{ top: (t.startHour - START_HOUR) * HOUR_H, height }}
+                      className={`absolute left-1 right-1 rounded-md border shadow-sm cursor-move hover:shadow-md select-none overflow-hidden group ${isBillable ? '' : 'bg-gray-100 border-gray-300'} ${showFade ? "after:content-[''] after:absolute after:inset-x-0 after:bottom-0 after:h-4 after:pointer-events-none after:bg-gradient-to-b after:from-transparent after:to-[inherit]" : ''}`}
+                      style={{ top: (t.startHour - START_HOUR) * HOUR_H, height, ...(isBillable ? styleColor : {}) }}
                       onMouseDown={onMouseDown}
                     >
                       {/* Resize handles */}
