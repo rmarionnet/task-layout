@@ -123,39 +123,6 @@ export default function WeeklyGrid(props: WeeklyGridProps) {
   return (
     <div className="w-full overflow-x-auto">
       <div className="min-w-[900px]">
-        {/* Client colors panel */}
-        <section aria-label="Couleurs clients" className="mb-3">
-          <div className="flex items-center justify-between">
-            <h2 className="text-sm font-medium">Couleurs clients</h2>
-            <div className="flex items-center gap-3">
-              <button type="button" onClick={exportColors} className="text-xs underline">Exporter</button>
-              <label className="text-xs underline cursor-pointer">
-                Importer
-                <input type="file" accept="application/json" onChange={onImportColors} className="hidden" />
-              </label>
-            </div>
-          </div>
-          <div className="mt-2 grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
-            {clients.slice().sort().map((c) => {
-              const hex = getClientHex(c) || '#ffffff';
-              const { bg, border } = deriveColors(hex);
-              return (
-                <div key={c} className="flex items-center gap-2">
-                  <span className="inline-block w-4 h-4 rounded-sm border" style={{ backgroundColor: bg, borderColor: border }} />
-                  <span className="flex-1 truncate text-sm">{c}</span>
-                  <input
-                    type="color"
-                    aria-label={`Couleur pour ${c}`}
-                    value={hex}
-                    onChange={(e) => setClientHex(c, e.target.value)}
-                    className="h-6 w-10 p-0 border rounded"
-                  />
-                  <button type="button" onClick={() => resetClientHex(c)} className="text-xs text-muted-foreground hover:underline">Réinitialiser</button>
-                </div>
-              );
-            })}
-          </div>
-        </section>
 
         {/* Header row */}
         <div className="grid" style={{ gridTemplateColumns: '120px repeat(6, 1fr)' }}>
@@ -445,6 +412,46 @@ export default function WeeklyGrid(props: WeeklyGridProps) {
           })}
         </div>
       </div>
+
+        {/* Légende couleurs (sous le planning) */}
+        <section aria-label="Couleurs clients" className="mt-4">
+          <h2 className="text-sm font-medium mb-2">Couleurs clients</h2>
+          <div className="flex items-center gap-3 mb-2">
+            <button type="button" onClick={exportColors} className="text-xs underline">Exporter</button>
+            <label className="text-xs underline cursor-pointer">
+              Importer
+              <input type="file" accept="application/json" onChange={onImportColors} className="hidden" />
+            </label>
+          </div>
+          <div className="flex flex-col gap-2">
+            {clients.slice().sort().map((c, idx) => {
+              const hex = getClientHex(c) || '#ffffff';
+              const { bg, border } = deriveColors(hex);
+              const inputId = `client-color-${idx}`;
+              return (
+                <div key={c} className="flex items-center gap-3">
+                  <span className="inline-block w-4 h-4 rounded-sm border" style={{ backgroundColor: bg, borderColor: border }} />
+                  <span className="flex-1 truncate text-sm">{c}</span>
+                  <input
+                    id={inputId}
+                    type="color"
+                    aria-label={`Choisir la couleur pour ${c}`}
+                    value={hex}
+                    onChange={(e) => setClientHex(c, e.target.value)}
+                    className="hidden"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => document.getElementById(inputId)?.click()}
+                    className="text-xs text-muted-foreground hover:underline"
+                  >
+                    Modifier
+                  </button>
+                </div>
+              );
+            })}
+          </div>
+        </section>
 
         <TaskModal
           open={modalOpen}
