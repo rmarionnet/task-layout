@@ -4,6 +4,7 @@ import TaskModal from './TaskModal';
 import { Badge } from '@/components/ui/badge';
 import { normalizeClient, deriveColors, getDefaultColorForClient } from '@/utils/color';
 import { toast } from '@/components/ui/use-toast';
+import { TooltipProvider, Tooltip, TooltipTrigger, TooltipContent } from '@/components/ui/tooltip';
 const START_HOUR = 7;
 const END_HOUR = 20; // exclusive
 const HEADER_H = 40; // px
@@ -370,77 +371,77 @@ export default function WeeklyGrid(props: WeeklyGridProps) {
                       styleColor = { backgroundColor: bg, borderColor: border, color: text };
                     }
                   }
-
                   return (
-                    <div
-                      key={t.id}
-                      className={`absolute left-1 right-1 rounded-md border shadow-sm cursor-move hover:shadow-md select-none overflow-hidden group ${isBillable ? '' : 'bg-gray-100 border-gray-300'} ${showFade ? "after:content-[''] after:absolute after:inset-x-0 after:bottom-0 after:h-4 after:pointer-events-none after:bg-gradient-to-b after:from-transparent after:to-[inherit]" : ''}`}
-                      style={{ top: (t.startHour - START_HOUR) * HOUR_H, height, ...(isBillable ? styleColor : {}) }}
-                      onMouseDown={onMouseDown}
-                      onMouseEnter={() => setHoveredTaskId(t.id)}
-                      onMouseLeave={() => setHoveredTaskId((cur) => (cur === t.id ? null : cur))}
-                      onMouseMove={(e) => {
-                        const parent = (e.currentTarget as HTMLElement).parentElement as HTMLElement;
-                        const rect = parent.getBoundingClientRect();
-                        const y = e.clientY - rect.top;
-                        let hour = START_HOUR + Math.floor(y / HOUR_H);
-                        hour = Math.max(START_HOUR, Math.min(END_HOUR - 1, hour));
-                        setHoverTarget({ dateISO, hour });
-                      }}
-                    >
-                      {/* Resize handles */}
-                      <div className="absolute left-0 right-0 h-2 -top-1 cursor-ns-resize" onMouseDown={onResize('top')} />
-                      <div className="absolute left-0 right-0 h-2 -bottom-1 cursor-ns-resize" onMouseDown={onResize('bottom')} />
+                    <TooltipProvider>
+                      <Tooltip key={t.id} delayDuration={150}>
+                        <TooltipTrigger asChild>
+                          <div
+                            className={`absolute left-1 right-1 rounded-md border shadow-sm cursor-move hover:shadow-md select-none overflow-hidden group ${isBillable ? '' : 'bg-gray-100 border-gray-300'} ${showFade ? "after:content-[''] after:absolute after:inset-x-0 after:bottom-0 after:h-4 after:pointer-events-none after:bg-gradient-to-b after:from-transparent after:to-[inherit]" : ''}`}
+                            style={{ top: (t.startHour - START_HOUR) * HOUR_H, height, ...(isBillable ? styleColor : {}) }}
+                            onMouseDown={onMouseDown}
+                            onMouseEnter={() => setHoveredTaskId(t.id)}
+                            onMouseLeave={() => setHoveredTaskId((cur) => (cur === t.id ? null : cur))}
+                            onMouseMove={(e) => {
+                              const parent = (e.currentTarget as HTMLElement).parentElement as HTMLElement;
+                              const rect = parent.getBoundingClientRect();
+                              const y = e.clientY - rect.top;
+                              let hour = START_HOUR + Math.floor(y / HOUR_H);
+                              hour = Math.max(START_HOUR, Math.min(END_HOUR - 1, hour));
+                              setHoverTarget({ dateISO, hour });
+                            }}
+                          >
+                            {/* Resize handles */}
+                            <div className="absolute left-0 right-0 h-2 -top-1 cursor-ns-resize" onMouseDown={onResize('top')} />
+                            <div className="absolute left-0 right-0 h-2 -bottom-1 cursor-ns-resize" onMouseDown={onResize('bottom')} />
 
-                      {/* Content area with duration-aware layout */}
-                      <div className={contentClasses}>
-                        {/* L1: Category + badge (unchanged) */}
-                        <div className="flex items-center justify-between">
-                          <div className="font-medium">{isBillable ? 'Facturable' : 'Non facturable'}</div>
-                          {isBillable && (
-                            <Badge variant="secondary" className={`${t.billed ? 'bg-emerald-200' : 'bg-yellow-200'} text-foreground`}>
-                              {t.billed ? 'Facturée' : 'À facturer'}
-                            </Badge>
-                          )}
-                        </div>
+                            {/* Content area with duration-aware layout */}
+                            <div className={contentClasses}>
+                              {/* L1: Category + badge (unchanged) */}
+                              <div className="flex items-center justify-between">
+                                <div className="font-medium">{isBillable ? 'Facturable' : 'Non facturable'}</div>
+                                {isBillable && (
+                                  <Badge variant="secondary" className={`${t.billed ? 'bg-emerald-200' : 'bg-yellow-200'} text-foreground`}>
+                                    {t.billed ? 'Facturée' : 'À facturer'}
+                                  </Badge>
+                                )}
+                              </div>
 
-                        {/* L2: Client — Projet / Type (more visible) */}
-                        <div className={`${line2Clamp ? 'truncate' : ''} text-foreground font-medium`}>
-                          {isBillable ? (
-                            <>
-                              <span>{t.client}</span>
-                              {t.project && (
-                                <span>{"\u00A0—\u00A0"}{t.project}</span>
+                              {/* L2: Client — Projet / Type (more visible) */}
+                              <div className={`${line2Clamp ? 'truncate' : ''} text-foreground font-medium`}>
+                                {isBillable ? (
+                                  <>
+                                    <span>{t.client}</span>
+                                    {t.project && (
+                                      <span>{"\u00A0—\u00A0"}{t.project}</span>
+                                    )}
+                                  </>
+                                ) : (
+                                  <span>{t.type}</span>
+                                )}
+                              </div>
+
+                              {/* L3: Time + Quote (for duration >= 2) */}
+                              {durationH >= 2 && (
+                                <div className="text-muted-foreground">
+                                  {timeLabel}
+                                  {t.quote && <span>{"\u00A0—\u00A0"}{t.quote}</span>}
+                                </div>
                               )}
-                            </>
-                          ) : (
-                            <span>{t.type}</span>
-                          )}
-                        </div>
 
-                        {/* L3: Time + Quote (for duration >= 2) */}
-                        {durationH >= 2 && (
-                          <div className="text-muted-foreground">
-                            {timeLabel}
-                            {t.quote && <span>{"\u00A0—\u00A0"}{t.quote}</span>}
+                              {/* L4(+): Description (first line for 2h, full for >=3h) */}
+                              {t.description && (
+                                durationH === 2 ? (
+                                  <div className="text-muted-foreground truncate">{t.description}</div>
+                                ) : (
+                                  durationH >= 3 && (
+                                    <div className="text-muted-foreground whitespace-normal break-words">{t.description}</div>
+                                  )
+                                )
+                              )}
+                            </div>
                           </div>
-                        )}
-
-                        {/* L4(+): Description (first line for 2h, full for >=3h) */}
-                        {t.description && (
-                          durationH === 2 ? (
-                            <div className="text-muted-foreground truncate">{t.description}</div>
-                          ) : (
-                            durationH >= 3 && (
-                              <div className="text-muted-foreground whitespace-normal break-words">{t.description}</div>
-                            )
-                          )
-                        )}
-                      </div>
-
-                      {/* Hover popover with full content (does not block DnD on block) */}
-                      <div className="pointer-events-none absolute left-0 right-0 -top-1 -translate-y-full z-50 opacity-0 group-hover:opacity-100 transition-opacity">
-                        <div className="pointer-events-auto shadow-lg rounded-md border bg-popover p-2 text-xs max-h-64 overflow-auto">
+                        </TooltipTrigger>
+                        <TooltipContent side="top" align="start" className="max-w-xs">
                           <div className="flex items-center justify-between">
                             <div className="font-medium">{isBillable ? 'Facturable' : 'Non facturable'}</div>
                             {isBillable && (
@@ -466,9 +467,9 @@ export default function WeeklyGrid(props: WeeklyGridProps) {
                           {t.description && (
                             <div className="mt-1 whitespace-normal break-words text-muted-foreground">{t.description}</div>
                           )}
-                        </div>
-                      </div>
-                    </div>
+                        </TooltipContent>
+                      </Tooltip>
+                    </TooltipProvider>
                   );
                 })}
               </div>
