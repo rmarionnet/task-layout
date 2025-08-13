@@ -196,7 +196,7 @@ export default function Index() {
     <main className="min-h-screen bg-background">
       <header className="border-b">
         <div className="container py-6">
-          <h1 className="text-2xl font-semibold">Time Tracking — Agenda hebdomadaire</h1>
+          <h1>Time Tracking — Agenda hebdomadaire</h1>
           <p className="text-muted-foreground mt-1">Lundi → Samedi, 07:00 → 20:00</p>
 
           <div className="mt-4 flex items-center gap-3 flex-wrap">

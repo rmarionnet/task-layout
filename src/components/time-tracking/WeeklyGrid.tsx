@@ -400,7 +400,7 @@ export default function WeeklyGrid(props: WeeklyGridProps) {
                               <div className="flex items-center justify-between">
                                 <div className="font-medium">{isBillable ? 'Facturable' : 'Non facturable'}</div>
                                 {isBillable && (
-                                  <Badge variant="secondary" className={`${t.billed ? 'bg-emerald-200' : 'bg-yellow-200'} text-foreground`}>
+                                  <Badge variant="secondary" className={`${t.billed ? 'bg-[hsl(var(--success))] text-[hsl(var(--success-foreground))]' : 'bg-[hsl(var(--warning))] text-[hsl(var(--warning-foreground))]'}`}>
                                     {t.billed ? 'Facturée' : 'À facturer'}
                                   </Badge>
                                 )}
@@ -445,7 +445,7 @@ export default function WeeklyGrid(props: WeeklyGridProps) {
                           <div className="flex items-center justify-between">
                             <div className="font-medium">{isBillable ? 'Facturable' : 'Non facturable'}</div>
                             {isBillable && (
-                              <Badge variant="secondary" className={`${t.billed ? 'bg-emerald-200' : 'bg-yellow-200'} text-foreground`}>
+                              <Badge variant="secondary" className={`${t.billed ? 'bg-[hsl(var(--success))] text-[hsl(var(--success-foreground))]' : 'bg-[hsl(var(--warning))] text-[hsl(var(--warning-foreground))]'}`}>
                                 {t.billed ? 'Facturée' : 'À facturer'}
                               </Badge>
                             )}
@@ -480,7 +480,7 @@ export default function WeeklyGrid(props: WeeklyGridProps) {
 
         {/* Légende couleurs (sous le planning) */}
         <section aria-label="Couleurs clients" className="mt-4">
-          <h2 className="text-sm font-medium mb-2">Couleurs clients</h2>
+          <h2 className="mb-2">Couleurs clients</h2>
           <div className="flex items-center gap-3 mb-2">
             <button type="button" onClick={exportColors} className="text-xs underline">Exporter</button>
             <label className="text-xs underline cursor-pointer">
