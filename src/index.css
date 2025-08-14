@@ -8,39 +8,48 @@ All colors MUST be HSL.
 
 @layer base {
   :root {
-    --background: 35 100% 98%;
-    --foreground: 224 36% 23%;
+    /* Couleurs principales selon la charte */
+    --background: 35 100% 98%; /* #FFFAF3 - Blanc cassé */
+    --foreground: 215 47% 23%; /* #25304E - Violet profond */
 
     --card: 0 0% 100%;
-    --card-foreground: 224 36% 23%;
+    --card-foreground: 215 47% 23%;
 
     --popover: 0 0% 100%;
-    --popover-foreground: 224 36% 23%;
+    --popover-foreground: 215 47% 23%;
 
-    --primary: 8 52% 54%;
-    --primary-foreground: 35 100% 98%;
+    /* Bouton principal CTA */
+    --primary: 6 52% 54%; /* #C65B4B - Rouge CTA */
+    --primary-foreground: 35 100% 98%; /* #FFFAF3 */
 
-    --secondary: 231 100% 80%;
-    --secondary-foreground: 224 36% 23%;
+    /* Bouton secondaire */
+    --secondary: 235 100% 80%; /* #99A8FF - Bleu-violet clair */
+    --secondary-foreground: 215 47% 23%; /* #25304E */
 
-    --muted: 220 14% 95%;
-    --muted-foreground: 214 19% 44%;
+    --muted: 210 11% 95%; /* #F0F2F5 - Fond en-têtes tableau */
+    --muted-foreground: 210 19% 44%; /* #5B6E87 - Titres H2 */
 
-    --accent: 231 100% 80%;
-    --accent-foreground: 224 36% 23%;
+    /* Accent = secondary pour cohérence */
+    --accent: 235 100% 80%; /* #99A8FF */
+    --accent-foreground: 215 47% 23%;
 
-    --destructive: 6 78% 57%;
+    /* États fonctionnels */
+    --destructive: 4 78% 57%; /* #E74C3C - Rouge erreur */
     --destructive-foreground: 0 0% 100%;
 
-    --success: 122 39% 49%;
+    --success: 122 39% 49%; /* #4CAF50 - Vert validation */
     --success-foreground: 0 0% 100%;
 
-    --warning: 39 90% 55%;
+    --warning: 39 90% 55%; /* #F5A623 - Orange alerte */
     --warning-foreground: 0 0% 100%;
 
-    --border: 204 10% 77%;
-    --input: 204 10% 77%;
-    --ring: 231 100% 80%;
+    /* Gris neutre pour données inactives */
+    --neutral: 202 12% 78%; /* #BDC3C7 */
+    --neutral-foreground: 215 47% 23%;
+
+    --border: 202 12% 78%;
+    --input: 202 12% 78%;
+    --ring: 235 100% 80%;
 
     --radius: 0.5rem;
 
@@ -106,16 +115,20 @@ All colors MUST be HSL.
   }
 
   body {
-    @apply bg-background text-foreground font-inter text-base leading-[1.5];
+    @apply bg-background text-foreground text-base leading-[1.5];
+    font-family: 'Inter', sans-serif;
   }
 
   h1 { /* H1: Poppins 700, 1.8rem, lh 1.2 */
-    @apply font-poppins font-bold text-[1.8rem] leading-[1.2] text-foreground;
+    font-family: 'Poppins', sans-serif;
+    @apply font-bold text-[1.8rem] leading-[1.2] text-foreground;
   }
   h2 { /* H2: Poppins 600, 1.4rem */
-    @apply font-poppins font-semibold text-[1.4rem] leading-tight text-muted-foreground;
+    font-family: 'Poppins', sans-serif;
+    @apply font-semibold text-[1.4rem] leading-tight text-muted-foreground;
   }
   h3 { /* H3: Poppins 500, 1.1rem */
-    @apply font-poppins font-medium text-[1.1rem] leading-tight text-foreground;
+    font-family: 'Poppins', sans-serif;
+    @apply font-medium text-[1.1rem] leading-tight text-foreground;
   }
 }
