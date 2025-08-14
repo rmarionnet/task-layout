@@ -365,7 +365,7 @@ export default function WeeklyGrid(props: WeeklyGridProps) {
                   const timeLabel = `${pad(t.startHour)}:00 → ${pad(t.endHour)}:00`;
                   const showFade = durationH === 1 || (durationH === 2 && !!t.description);
                   const contentClasses = durationH === 1
-                    ? 'p-1 text-[11px] leading-[1.05] space-y-0.5'
+                    ? 'p-1 text-xs leading-tight space-y-0.5'
                     : durationH === 2
                       ? 'p-1 text-xs leading-tight space-y-0.5'
                       : `p-2 ${durationH >= 5 ? 'text-sm' : 'text-xs'} leading-5 space-y-0.5`;
@@ -404,27 +404,24 @@ export default function WeeklyGrid(props: WeeklyGridProps) {
 
                             {/* Content area with duration-aware layout */}
                             <div className={contentClasses}>
-                              {/* L1: Category + badge (unchanged) */}
+                              {/* L1: Client — Projet / Type + badge */}
                               <div className="flex items-center justify-between">
-                                <div className="font-medium">{isBillable ? 'Facturable' : 'Non facturable'}</div>
+                                <div className={`${line2Clamp ? 'truncate' : ''} text-foreground font-medium`}>
+                                  {isBillable ? (
+                                    <>
+                                      <span>{t.client}</span>
+                                      {t.project && (
+                                        <span>{"\u00A0—\u00A0"}{t.project}</span>
+                                      )}
+                                    </>
+                                  ) : (
+                                    <span>{t.type}</span>
+                                  )}
+                                </div>
                                 {isBillable && (
                                   <Badge variant="secondary" className={`${t.billed ? 'bg-[hsl(var(--success))] text-[hsl(var(--success-foreground))]' : 'bg-[hsl(var(--warning))] text-[hsl(var(--warning-foreground))]'}`}>
-                                    {t.billed ? 'Facturée' : 'À facturer'}
+                                    {t.billed ? 'F' : 'AF'}
                                   </Badge>
-                                )}
-                              </div>
-
-                              {/* L2: Client — Projet / Type (more visible) */}
-                              <div className={`${line2Clamp ? 'truncate' : ''} text-foreground font-medium`}>
-                                {isBillable ? (
-                                  <>
-                                    <span>{t.client}</span>
-                                    {t.project && (
-                                      <span>{"\u00A0—\u00A0"}{t.project}</span>
-                                    )}
-                                  </>
-                                ) : (
-                                  <span>{t.type}</span>
                                 )}
                               </div>
 
