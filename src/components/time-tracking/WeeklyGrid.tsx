@@ -166,6 +166,9 @@ export default function WeeklyGrid(props: WeeklyGridProps) {
     setModalOpen(true);
   };
 
+  const today = new Date();
+  const todayISO = isoDate(today);
+
   return (
     <div className="w-full overflow-x-auto">
       <div className="min-w-[900px]">
@@ -173,11 +176,16 @@ export default function WeeklyGrid(props: WeeklyGridProps) {
         {/* Header row */}
         <div className="grid" style={{ gridTemplateColumns: '120px repeat(6, 1fr)' }}>
           <div className="h-10 box-border flex items-center justify-center text-sm font-medium border-b">Heures</div>
-          {weekDays.map((d) => (
-            <div key={isoDate(d)} className="h-10 box-border flex items-center justify-center text-sm font-medium border-b">
-              {dayLabel(d)}
-            </div>
-          ))}
+          {weekDays.map((d) => {
+            const isToday = isoDate(d) === todayISO;
+            return (
+              <div key={isoDate(d)} className="h-10 box-border flex items-center justify-center text-sm font-medium border-b">
+                <span className={isToday ? 'text-primary font-semibold' : ''}>
+                  {dayLabel(d)}
+                </span>
+              </div>
+            );
+          })}
         </div>
 
         {/* Body rows (hours) */}
