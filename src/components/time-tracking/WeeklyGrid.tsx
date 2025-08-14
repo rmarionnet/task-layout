@@ -8,7 +8,7 @@ import { TooltipProvider, Tooltip, TooltipTrigger, TooltipContent } from '@/comp
 const START_HOUR = 7;
 const END_HOUR = 20; // exclusive
 const HEADER_H = 40; // px
-const HOUR_H = 48;   // px
+const HOUR_H = 60;   // px (increased from 48 for better readability)
 
 function pad(n: number) { return n < 10 ? `0${n}` : `${n}`; }
 
