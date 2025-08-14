@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import WeeklyGrid from '@/components/time-tracking/WeeklyGrid';
+import CSVImport from '@/components/time-tracking/CSVImport';
 import { Task, Category } from '@/types';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
@@ -192,6 +193,40 @@ export default function Index() {
     URL.revokeObjectURL(url);
   }
 
+  // CSV import
+  const handleCSVImport = (importedTasks: Task[]) => {
+    // Check for overlaps with existing tasks
+    const conflicts: string[] = [];
+    
+    importedTasks.forEach(newTask => {
+      const hasConflict = tasks.some(existingTask => 
+        overlaps(newTask, existingTask)
+      );
+      
+      if (hasConflict) {
+        conflicts.push(`${newTask.dateISO} ${pad(newTask.startHour)}:00-${pad(newTask.endHour)}:00`);
+      }
+    });
+
+    if (conflicts.length > 0) {
+      toast({
+        title: 'Conflits détectés',
+        description: `${conflicts.length} tâche(s) en conflit avec l'existant. Import annulé.`,
+        variant: 'destructive'
+      });
+      console.warn('Conflits d\'horaires:', conflicts);
+      return;
+    }
+
+    // Add all tasks
+    setTasks(prev => [...prev, ...importedTasks]);
+    
+    toast({
+      title: 'Import terminé',
+      description: `${importedTasks.length} tâche(s) ajoutée(s) sans conflit`
+    });
+  };
+
   return (
     <main className="min-h-screen bg-background">
       <header className="border-b">
@@ -229,8 +264,9 @@ export default function Index() {
                 {types.map(t => <option key={t} value={t}>{t}</option>)}
               </select>
             </div>
-            <div className="flex items-end gap-2">
+            <div className="flex items-end gap-2 flex-wrap">
               {anyFilter && <Button variant="secondary" onClick={resetFilters}>Réinitialiser</Button>}
+              <CSVImport onImport={handleCSVImport} />
               <Button onClick={exportWeek}>Export CSV (semaine)</Button>
               <Button variant="secondary" onClick={exportAll}>Export CSV (tout)</Button>
             </div>
