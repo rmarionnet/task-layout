@@ -206,10 +206,12 @@ export default function WeeklyGrid(props: WeeklyGridProps) {
         {/* Body rows (hours) */}
         <div className="grid box-border" style={{ gridTemplateColumns: '120px repeat(6, 1fr)' }}>
           {/* Hours column */}
-          <div className="grid" style={{ gridTemplateRows: `repeat(${timeSlots.length}, 30px)` }}>
-            {timeSlots.map((slot) => (
-              <div key={slot} className="box-border border-b border-border/20 text-sm flex items-center justify-center">
-                {formatTime(slot)}
+          <div className="grid" style={{ gridTemplateRows: `repeat(${hours.length}, ${HOUR_H}px)` }}>
+            {hours.map((h) => (
+              <div key={h} className="box-border border-b text-sm flex items-center justify-center relative">
+                {pad(h)}:00
+                {/* Dotted separator for half-hour */}
+                <div className="absolute left-0 right-0 top-1/2 border-t border-dotted border-border/30 -translate-y-0.5"></div>
               </div>
             ))}
           </div>
@@ -219,7 +221,7 @@ export default function WeeklyGrid(props: WeeklyGridProps) {
             const dateISO = isoDate(d);
             const dayTasks = filteredTasks.filter((t) => t.dateISO === dateISO);
             return (
-              <div key={dateISO} className="relative box-border border-l grid" style={{ gridTemplateRows: `repeat(${timeSlots.length}, 30px)` }}
+              <div key={dateISO} className="relative box-border border-l grid" style={{ gridTemplateRows: `repeat(${hours.length}, ${HOUR_H}px)` }}
                 onMouseMove={(e) => {
                   const rect = (e.currentTarget as HTMLElement).getBoundingClientRect();
                   const y = e.clientY - rect.top;
@@ -230,14 +232,25 @@ export default function WeeklyGrid(props: WeeklyGridProps) {
                 onMouseLeave={() => setHoverTarget(null)}
               >
                 {/* Clickable time slots (30min precision) */}
-                {timeSlots.map((slot) => (
-                  <button
-                    key={slot}
-                    type="button"
-                    className="w-full h-[30px] box-border border-0 border-b border-border/20 hover:bg-accent/40 transition-colors"
-                    aria-label={`Créer tâche à ${formatTime(slot)}`}
-                    onClick={() => openCreate(dateISO, slot)}
-                  />
+                {hours.map((h) => (
+                  <div key={h} className="relative box-border border-b">
+                    {/* Upper half (on the hour) */}
+                    <button
+                      type="button"
+                      className="w-full h-[30px] box-border hover:bg-accent/40 transition-colors"
+                      aria-label={`Créer tâche à ${formatTime(h)}`}
+                      onClick={() => openCreate(dateISO, h)}
+                    />
+                    {/* Dotted separator */}
+                    <div className="absolute left-0 right-0 top-1/2 border-t border-dotted border-border/30 -translate-y-0.5"></div>
+                    {/* Lower half (on the half-hour) */}
+                    <button
+                      type="button"
+                      className="w-full h-[30px] box-border hover:bg-accent/40 transition-colors"
+                      aria-label={`Créer tâche à ${formatTime(h + 0.5)}`}
+                      onClick={() => openCreate(dateISO, h + 0.5)}
+                    />
+                  </div>
                 ))}
 
                 {/* Overlay tasks with DnD */}
