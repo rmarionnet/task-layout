@@ -12,6 +12,12 @@ const END_HOUR = 20; // exclusive
 
 function pad(n: number) { return n < 10 ? `0${n}` : `${n}`; }
 
+function formatTime(hour: number): string {
+  const h = Math.floor(hour);
+  const m = (hour % 1) * 60;
+  return `${pad(h)}:${pad(m)}`;
+}
+
 function getMonday(date = new Date()) {
   const d = new Date(date);
   const day = d.getDay();
@@ -111,7 +117,7 @@ export default function Index() {
   }
 
   const upsertTask = (task: Task): { ok: true } | { ok: false; error: string } => {
-    if (task.startHour < START_HOUR || task.endHour > END_HOUR) {
+    if (task.startHour < START_HOUR || task.endHour > END_HOUR || task.endHour <= task.startHour) {
       return { ok: false, error: 'Plage horaire invalide (07:00 → 20:00).' };
     }
     // Anti-chevauchement
@@ -126,7 +132,7 @@ export default function Index() {
       return next;
     });
 
-    toast({ title: 'Sauvegardé', description: `${task.dateISO} ${pad(task.startHour)}:00 → ${pad(task.endHour)}:00` });
+    toast({ title: 'Sauvegardé', description: `${task.dateISO} ${formatTime(task.startHour)} → ${formatTime(task.endHour)}` });
     return { ok: true };
   };
 

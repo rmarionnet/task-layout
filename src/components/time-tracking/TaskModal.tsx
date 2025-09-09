@@ -16,15 +16,23 @@ function pad(n: number) {
   return n < 10 ? `0${n}` : `${n}`;
 }
 
-function hoursArray() {
+function formatTime(hour: number): string {
+  const h = Math.floor(hour);
+  const m = (hour % 1) * 60;
+  return `${pad(h)}:${pad(m)}`;
+}
+
+function timeSlotsArray() {
   const arr: number[] = [];
-  for (let h = START_HOUR; h < END_HOUR; h++) arr.push(h);
+  for (let h = START_HOUR; h < END_HOUR; h += 0.5) {
+    arr.push(h);
+  }
   return arr;
 }
 
 function getDurationOptions(startHour: number) {
-  const max = Math.min(12, END_HOUR - startHour);
-  return Array.from({ length: max }, (_, i) => i + 1);
+  const max = Math.min(24, (END_HOUR - startHour) * 2); // max 24 slots of 30min
+  return Array.from({ length: max }, (_, i) => (i + 1) * 0.5);
 }
 
 function titleForCategory(c: Category) {
@@ -234,18 +242,18 @@ export default function TaskModal(props: TaskModalProps) {
               <select
                 className="w-full h-10 border rounded-md px-3"
                 value={localStartHour}
-                onChange={(e) => setLocalStartHour(parseInt(e.target.value, 10))}
+                onChange={(e) => setLocalStartHour(parseFloat(e.target.value))}
               >
-                {hoursArray().filter(h => h + duration <= END_HOUR).map((h) => (
-                  <option key={h} value={h}>{pad(h)}:00</option>
+                {timeSlotsArray().filter(h => h + duration <= END_HOUR).map((h) => (
+                  <option key={h} value={h}>{formatTime(h)}</option>
                 ))}
               </select>
             </div>
             <div className="space-y-2">
               <Label>Durée (h)</Label>
-              <select className="w-full h-10 border rounded-md px-3" value={duration} onChange={(e) => setDuration(parseInt(e.target.value, 10))}>
+              <select className="w-full h-10 border rounded-md px-3" value={duration} onChange={(e) => setDuration(parseFloat(e.target.value))}>
                 {durationOptions.map((d) => (
-                  <option key={d} value={d}>{d}</option>
+                  <option key={d} value={d}>{d === Math.floor(d) ? `${d}h` : `${d}h`}</option>
                 ))}
               </select>
             </div>
@@ -265,7 +273,7 @@ export default function TaskModal(props: TaskModalProps) {
         </DialogFooter>
 
         {/* Accessibility helpers */}
-        <div className="sr-only">Fin: {pad(endHour)}:00</div>
+        <div className="sr-only">Fin: {formatTime(endHour)}</div>
       </DialogContent>
     </Dialog>
   );

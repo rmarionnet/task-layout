@@ -9,8 +9,15 @@ const START_HOUR = 7;
 const END_HOUR = 20; // exclusive
 const HEADER_H = 40; // px
 const HOUR_H = 60;   // px (increased from 48 for better readability)
+const SLOT_H = HOUR_H / 2; // 30px per 30-minute slot
 
 function pad(n: number) { return n < 10 ? `0${n}` : `${n}`; }
+
+function formatTime(hour: number): string {
+  const h = Math.floor(hour);
+  const m = (hour % 1) * 60;
+  return `${pad(h)}:${pad(m)}`;
+}
 
 function isoDate(d: Date) {
   const y = d.getFullYear();
@@ -42,6 +49,13 @@ export default function WeeklyGrid(props: WeeklyGridProps) {
   const { weekStart, tasks, filteredTasks, clients, projectsByClient, quotesByClient, types, onUpsert, onDelete } = props;
   const weekDays = useMemo(() => Array.from({ length: 6 }, (_, i) => addDays(weekStart, i)), [weekStart]);
   const hours = useMemo(() => Array.from({ length: END_HOUR - START_HOUR }, (_, i) => START_HOUR + i), []);
+  const timeSlots = useMemo(() => {
+    const slots = [];
+    for (let h = START_HOUR; h < END_HOUR; h += 0.5) {
+      slots.push(h);
+    }
+    return slots;
+  }, []);
 
   const [modalOpen, setModalOpen] = useState(false);
   const [modalMode, setModalMode] = useState<'create' | 'edit'>('create');
@@ -128,17 +142,18 @@ export default function WeeklyGrid(props: WeeklyGridProps) {
       } else if (key === 'v') {
         if (copiedTask && hoverTarget) {
           const duration = copiedTask.endHour - copiedTask.startHour;
-          let start = Math.max(START_HOUR, Math.min(END_HOUR - duration, hoverTarget.hour));
-          const newTask: Task = {
-            ...copiedTask,
-            id: Math.random().toString(36).slice(2),
-            dateISO: hoverTarget.dateISO,
-            startHour: start,
-            endHour: start + duration,
-          };
-          const res = onUpsert(newTask);
-          if ('ok' in res && res.ok) {
-            toast({ title: 'Tâche collée', description: `${pad(newTask.startHour)}:00 → ${pad(newTask.endHour)}:00` });
+            // Modal default is 0.5h if less than 0.5h available
+            let start = Math.max(START_HOUR, Math.min(END_HOUR - 0.5, hoverTarget.hour));
+            const newTask: Task = {
+              ...copiedTask,
+              id: Math.random().toString(36).slice(2),
+              dateISO: hoverTarget.dateISO,
+              startHour: start,
+              endHour: start + duration,
+            };
+            const res = onUpsert(newTask);
+            if ('ok' in res && res.ok) {
+              toast({ title: 'Tâche collée', description: `${formatTime(newTask.startHour)} → ${formatTime(newTask.endHour)}` });
           } else {
             const err = (res as any)?.error || 'Conflit ou plage invalide.';
             toast({ title: 'Collage impossible', description: err });
@@ -191,10 +206,10 @@ export default function WeeklyGrid(props: WeeklyGridProps) {
         {/* Body rows (hours) */}
         <div className="grid box-border" style={{ gridTemplateColumns: '120px repeat(6, 1fr)' }}>
           {/* Hours column */}
-          <div className="grid" style={{ gridTemplateRows: `repeat(${hours.length}, ${HOUR_H}px)` }}>
-            {hours.map((h) => (
-              <div key={h} className="box-border border-b text-sm flex items-center justify-center">
-                {pad(h)}:00
+          <div className="grid" style={{ gridTemplateRows: `repeat(${timeSlots.length}, 30px)` }}>
+            {timeSlots.map((slot) => (
+              <div key={slot} className="box-border border-b border-border/20 text-sm flex items-center justify-center">
+                {formatTime(slot)}
               </div>
             ))}
           </div>
@@ -204,31 +219,31 @@ export default function WeeklyGrid(props: WeeklyGridProps) {
             const dateISO = isoDate(d);
             const dayTasks = filteredTasks.filter((t) => t.dateISO === dateISO);
             return (
-              <div key={dateISO} className="relative box-border border-l grid" style={{ gridTemplateRows: `repeat(${hours.length}, ${HOUR_H}px)` }}
+              <div key={dateISO} className="relative box-border border-l grid" style={{ gridTemplateRows: `repeat(${timeSlots.length}, 30px)` }}
                 onMouseMove={(e) => {
                   const rect = (e.currentTarget as HTMLElement).getBoundingClientRect();
                   const y = e.clientY - rect.top;
-                  let hour = START_HOUR + Math.floor(y / HOUR_H);
-                  hour = Math.max(START_HOUR, Math.min(END_HOUR - 1, hour));
+                  let hour = START_HOUR + Math.floor(y / SLOT_H) * 0.5;
+                  hour = Math.max(START_HOUR, Math.min(END_HOUR - 0.5, hour));
                   setHoverTarget({ dateISO, hour });
                 }}
                 onMouseLeave={() => setHoverTarget(null)}
               >
-                {/* Clickable hour cells */}
-                {hours.map((h) => (
+                {/* Clickable time slots (30min precision) */}
+                {timeSlots.map((slot) => (
                   <button
-                    key={h}
+                    key={slot}
                     type="button"
-                    className="w-full box-border border-0 border-b hover:bg-accent/40 transition-colors"
-                    aria-label={`Créer tâche à ${pad(h)}:00`}
-                    onClick={() => openCreate(dateISO, h)}
+                    className="w-full h-[30px] box-border border-0 border-b border-border/20 hover:bg-accent/40 transition-colors"
+                    aria-label={`Créer tâche à ${formatTime(slot)}`}
+                    onClick={() => openCreate(dateISO, slot)}
                   />
                 ))}
 
                 {/* Overlay tasks with DnD */}
                 {dayTasks.map((t) => {
-                  const top = (t.startHour - START_HOUR) * HOUR_H + HEADER_H;
-                  const height = (t.endHour - t.startHour) * HOUR_H - 1;
+                  const top = (t.startHour - START_HOUR) * SLOT_H * 2;
+                  const height = (t.endHour - t.startHour) * SLOT_H * 2 - 1;
                   const isBillable = t.category === 'FACTURABLE';
 
                   // DnD state per task (via closures)
@@ -270,11 +285,11 @@ export default function WeeklyGrid(props: WeeklyGridProps) {
                       isDragging = false;
                       document.body.style.cursor = '';
 
-                      // Compute target snapped slots
+                      // Compute target snapped slots (30min precision)
                       const shiftDays = Math.round(dx / colWidth);
                       const newDayIdx = Math.min(5, Math.max(0, origDayIdx + shiftDays));
-                      const shiftHours = Math.round(dy / HOUR_H);
-                      const newStart = Math.min(END_HOUR - durationH, Math.max(START_HOUR, t.startHour + shiftHours));
+                      const shiftSlots = Math.round(dy / SLOT_H);
+                      const newStart = Math.min(END_HOUR - durationH, Math.max(START_HOUR, t.startHour + shiftSlots * 0.5));
 
                       const newDate = isoDate(addDays(weekStart, newDayIdx));
                       const updated: Task = { ...t, dateISO: newDate, startHour: newStart, endHour: newStart + durationH };
@@ -313,19 +328,19 @@ export default function WeeklyGrid(props: WeeklyGridProps) {
                     const handleMove = (me: MouseEvent) => {
                       if (!isResizing) return;
                       dy = me.clientY - startClientY;
-                      const snap = Math.round(dy / HOUR_H);
+                      const snap = Math.round(dy / SLOT_H) * 0.5;
 
                       let newStart = t.startHour;
                       let newDuration = durationH;
                       if (pos === 'bottom') {
-                        newDuration = Math.max(1, Math.min(END_HOUR - t.startHour, durationH + snap));
+                        newDuration = Math.max(0.5, Math.min(END_HOUR - t.startHour, durationH + snap));
                       } else {
-                        newStart = Math.max(START_HOUR, Math.min(t.endHour - 1, t.startHour + snap));
+                        newStart = Math.max(START_HOUR, Math.min(t.endHour - 0.5, t.startHour + snap));
                         newDuration = t.endHour - newStart;
                       }
 
-                      const newTopPx = (newStart - START_HOUR) * HOUR_H;
-                      const newHeightPx = newDuration * HOUR_H - 1;
+                      const newTopPx = (newStart - START_HOUR) * SLOT_H * 2;
+                      const newHeightPx = newDuration * SLOT_H * 2 - 1;
                       target.style.zIndex = '50';
                       target.style.top = `${newTopPx}px`;
                       target.style.height = `${newHeightPx}px`;
@@ -337,13 +352,13 @@ export default function WeeklyGrid(props: WeeklyGridProps) {
                       isResizing = false;
                       document.body.style.cursor = '';
 
-                      const snap = Math.round(dy / HOUR_H);
+                      const snap = Math.round(dy / SLOT_H) * 0.5;
                       let newStart = t.startHour;
                       let newDuration = durationH;
                       if (pos === 'bottom') {
-                        newDuration = Math.max(1, Math.min(END_HOUR - t.startHour, durationH + snap));
+                        newDuration = Math.max(0.5, Math.min(END_HOUR - t.startHour, durationH + snap));
                       } else {
-                        newStart = Math.max(START_HOUR, Math.min(t.endHour - 1, t.startHour + snap));
+                        newStart = Math.max(START_HOUR, Math.min(t.endHour - 0.5, t.startHour + snap));
                         newDuration = t.endHour - newStart;
                       }
 
@@ -362,7 +377,7 @@ export default function WeeklyGrid(props: WeeklyGridProps) {
                   };
 
                   const durationH = t.endHour - t.startHour;
-                  const timeLabel = `${pad(t.startHour)}:00 → ${pad(t.endHour)}:00`;
+                  const timeLabel = `${formatTime(t.startHour)} → ${formatTime(t.endHour)}`;
                   const showFade = durationH === 1 || (durationH === 2 && !!t.description);
                   const contentClasses = durationH === 1
                     ? 'p-1 text-xs leading-tight space-y-0.5'
@@ -385,7 +400,7 @@ export default function WeeklyGrid(props: WeeklyGridProps) {
                         <TooltipTrigger asChild>
                           <div
                             className={`absolute left-1 right-1 rounded-md border shadow-sm cursor-move hover:shadow-md select-none overflow-hidden group ${isBillable ? '' : 'bg-gray-100 border-gray-300'} ${showFade ? "after:content-[''] after:absolute after:inset-x-0 after:bottom-0 after:h-4 after:pointer-events-none after:bg-gradient-to-b after:from-transparent after:to-[inherit]" : ''}`}
-                            style={{ top: (t.startHour - START_HOUR) * HOUR_H, height, ...(isBillable ? styleColor : {}) }}
+                            style={{ top: (t.startHour - START_HOUR) * SLOT_H * 2, height, ...(isBillable ? styleColor : {}) }}
                             onMouseDown={onMouseDown}
                             onMouseEnter={() => setHoveredTaskId(t.id)}
                             onMouseLeave={() => setHoveredTaskId((cur) => (cur === t.id ? null : cur))}
@@ -393,7 +408,7 @@ export default function WeeklyGrid(props: WeeklyGridProps) {
                               const parent = (e.currentTarget as HTMLElement).parentElement as HTMLElement;
                               const rect = parent.getBoundingClientRect();
                               const y = e.clientY - rect.top;
-                              let hour = START_HOUR + Math.floor(y / HOUR_H);
+                              let hour = START_HOUR + Math.floor(y / SLOT_H) * 0.5;
                               hour = Math.max(START_HOUR, Math.min(END_HOUR - 1, hour));
                               setHoverTarget({ dateISO, hour });
                             }}
