@@ -208,10 +208,8 @@ export default function WeeklyGrid(props: WeeklyGridProps) {
           {/* Hours column */}
           <div className="grid" style={{ gridTemplateRows: `repeat(${hours.length}, ${HOUR_H}px)` }}>
             {hours.map((h) => (
-              <div key={h} className="box-border border-b text-sm flex items-center justify-center relative">
+              <div key={h} className="box-border border-b text-sm flex items-center justify-center">
                 {pad(h)}:00
-                {/* Dotted separator for half-hour */}
-                <div className="absolute left-0 right-0 top-1/2 border-t border-dotted border-border/30 -translate-y-0.5"></div>
               </div>
             ))}
           </div>
@@ -396,7 +394,7 @@ export default function WeeklyGrid(props: WeeklyGridProps) {
                     ? 'p-1 text-xs leading-tight space-y-0.5'
                     : durationH === 2
                       ? 'p-1 text-xs leading-tight space-y-0.5'
-                      : `p-2 ${durationH >= 5 ? 'text-sm' : 'text-xs'} leading-5 space-y-0.5`;
+                      : `p-2 text-xs leading-5 space-y-0.5`;
                   const line2Clamp = durationH <= 2;
 
                   let styleColor: any = {};
