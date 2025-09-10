@@ -165,15 +165,15 @@ export default function Index() {
       .sort((a,b) => a.dateISO.localeCompare(b.dateISO) || a.startHour - b.startHour)
       .map(t => [
         t.dateISO,
-        `${pad(t.startHour)}:00`,
-        `${pad(t.endHour)}:00`,
+        formatTime(t.startHour),
+        formatTime(t.endHour),
         t.category,
         t.client ?? '',
         t.project ?? '',
         t.quote ?? '',
         t.type ?? '',
         t.description ?? '',
-        (t.endHour - t.startHour),
+        (t.endHour - t.startHour).toString().replace('.', ','),
         t.category === 'FACTURABLE' ? (t.billed ? 'oui' : 'non') : ''
       ].map(escapeCSV).join(';'));
     return [header, ...rows].join('\n');

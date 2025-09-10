@@ -419,7 +419,7 @@ export default function WeeklyGrid(props: WeeklyGridProps) {
                               const parent = (e.currentTarget as HTMLElement).parentElement as HTMLElement;
                               const rect = parent.getBoundingClientRect();
                               const y = e.clientY - rect.top;
-                              let hour = START_HOUR + Math.floor(y / SLOT_H) * 0.5;
+                               let hour = START_HOUR + Math.round(y / SLOT_H) * 0.5;
                               hour = Math.max(START_HOUR, Math.min(END_HOUR - 1, hour));
                               setHoverTarget({ dateISO, hour });
                             }}
