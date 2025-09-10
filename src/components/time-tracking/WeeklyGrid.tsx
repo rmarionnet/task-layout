@@ -223,7 +223,7 @@ export default function WeeklyGrid(props: WeeklyGridProps) {
                 onMouseMove={(e) => {
                   const rect = (e.currentTarget as HTMLElement).getBoundingClientRect();
                   const y = e.clientY - rect.top;
-                  let hour = START_HOUR + Math.floor(y / SLOT_H) * 0.5;
+                  let hour = START_HOUR + Math.round(y / SLOT_H) * 0.5;
                   hour = Math.max(START_HOUR, Math.min(END_HOUR - 0.5, hour));
                   setHoverTarget({ dateISO, hour });
                 }}
