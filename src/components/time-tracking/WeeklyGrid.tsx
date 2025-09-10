@@ -244,7 +244,7 @@ export default function WeeklyGrid(props: WeeklyGridProps) {
                     {/* Lower half (on the half-hour) */}
                     <button
                       type="button"
-                      className="w-full h-[30px] box-border hover:bg-accent/40 transition-colors relative -translate-y-0.5"
+                      className="w-full h-[30px] box-border hover:bg-accent/40 transition-colors"
                       aria-label={`Créer tâche à ${formatTime(h + 0.5)}`}
                       onClick={() => openCreate(dateISO, h + 0.5)}
                     />
