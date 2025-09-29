@@ -17,10 +17,10 @@ function parseTimeToHour(time: string): number {
   if (!match) throw new Error(`Format d'heure invalide: ${time}`);
   const hours = parseInt(match[1], 10);
   const minutes = parseInt(match[2], 10);
-  if (hours < 0 || hours > 23 || minutes !== 0) {
-    throw new Error(`Heure invalide: ${time} (seules les heures pleines sont supportées)`);
+  if (hours < 0 || hours > 23 || (minutes !== 0 && minutes !== 30)) {
+    throw new Error(`Heure invalide: ${time} (seules les heures pleines et demi-heures sont supportées)`);
   }
-  return hours;
+  return hours + (minutes === 30 ? 0.5 : 0);
 }
 
 function parseCSVLine(line: string): string[] {
