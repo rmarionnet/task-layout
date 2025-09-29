@@ -231,23 +231,23 @@ export default function WeeklyGrid(props: WeeklyGridProps) {
               >
                 {/* Clickable time slots (30min precision) */}
                 {hours.map((h) => (
-                  <div key={h} className="relative box-border border-b">
-                    {/* Upper half (on the hour) */}
+                  <div key={h} className="relative box-border border-b h-[60px]">
+                    {/* Upper half (on the hour) - absolute positioning */}
                     <button
                       type="button"
-                      className="w-full h-[30px] box-border hover:bg-accent/40 transition-colors"
+                      className="absolute top-0 left-0 w-full h-[30px] box-border hover:bg-accent/40 transition-colors"
                       aria-label={`Créer tâche à ${formatTime(h)}`}
                       onClick={() => openCreate(dateISO, h)}
                     />
-                    {/* Dotted separator */}
-                    <div className="absolute left-0 right-0 top-1/2 border-t border-dotted border-border/30"></div>
-                    {/* Lower half (on the half-hour) */}
+                    {/* Lower half (on the half-hour) - absolute positioning */}
                     <button
                       type="button"
-                      className="w-full h-[30px] box-border hover:bg-accent/40 transition-colors"
+                      className="absolute top-[30px] left-0 w-full h-[30px] box-border hover:bg-accent/40 transition-colors"
                       aria-label={`Créer tâche à ${formatTime(h + 0.5)}`}
                       onClick={() => openCreate(dateISO, h + 0.5)}
                     />
+                    {/* Dotted separator - perfectly centered at 30px */}
+                    <div className="absolute left-0 right-0 top-1/2 border-t border-dotted border-border/30"></div>
                   </div>
                 ))}
 
